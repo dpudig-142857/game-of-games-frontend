@@ -19,6 +19,8 @@ import {
     centerOrStart
 } from './utils.js';
 
+let gog_version = 'private' // public vs private
+
 const urlParams = new URLSearchParams(window.location.search);
 const sessionId = urlParams.get('sessionId');
 
@@ -280,8 +282,11 @@ function createPointsSystem() {
     box.appendChild(pointsCheckboxes);
 
     pointsCheckboxes.appendChild(createCheckbox(0, 'points', 'Just Points'));
-    pointsCheckboxes.appendChild(createCheckbox(1, 'points', 'Points & Cones'));
-    //pointsCheckboxes.appendChild(createCheckbox(2, 'points', 'Points & Shots'));
+    if (gog_version == 'private') {
+        pointsCheckboxes.appendChild(createCheckbox(1, 'points', 'Points & Cones'));
+    } else if (gog_version == 'public') {
+        pointsCheckboxes.appendChild(createCheckbox(1, 'points', 'Points & Shots'));
+    }
 
     const points = pointsCheckboxes.querySelectorAll('.points-checkbox');
     points.forEach(checkbox => {
@@ -831,6 +836,8 @@ function createConfirmationGeneral() {
             return system.num == num && system.type == 'points';
         } else if (thePoints == 'Points & Cones') {
             return system.num == num && system.type == 'cones';
+        } else if (thePoints == 'Points & Shots') {
+            return system.num == num && system.type == 'shots';
         } else {
             return undefined;
         }
@@ -854,6 +861,10 @@ function createConfirmationGeneral() {
                 text = `Coin Flip<br>${span('Point or Cone')}`;
             } else if (reward == 'nc') {
                 text = `Coin Flip<br>${span('Nothing or Cone')}`;
+            } else if (reward == 'ps') {
+                text = `Coin Flip<br>${span('Point or Shot')}`;
+            } else if (reward == 'ns') {
+                text = `Coin Flip<br>${span('Nothing or Shot')}`;
             }
 
             const rewardBox = document.createElement('div');
@@ -1166,32 +1177,6 @@ async function initialize() {
     if (sessionType == 'center') {
 
     }
-    
-    /*thePoints = 'Points & Cones';
-    theNumSpeciality = 1;
-    thePlayers = [
-        { name: 'Alex', player_id: 5 },
-        { name: 'Jake', player_id: 3 },
-        { name: 'Dan', player_id: 1 },
-        { name: 'Gideon', player_id: 2 }
-    ];
-    allGamesInfo.forEach(g => theGames.push(g));
-    thePlayers.forEach(p => theSpecialities.push({
-        player_id: p.player_id,
-        games: [{
-            colour: '#FF7043',
-            game_id: 51,
-            header: 'Stack those blocks!<br>Who knocked it over?',
-            name: 'Uno Stacko',
-            player_max: 10, 
-            player_min: 2,
-            results_type: 'single',
-            starting: 'wheel_first',
-            tag: 'uno_stacko',
-            type: 'party',
-            winner_criteria: 'loser'
-        }]
-    }));*/
 
     const btns = document.querySelectorAll('.bottom-button');
     btns.forEach(btn => {

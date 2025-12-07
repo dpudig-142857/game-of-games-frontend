@@ -195,6 +195,12 @@ export function typeText(type) {
         case 'c_cone': return 'Coin Flip Cones:';
         case 'w_cone': return 'Wheel Cones:';
         case 'v_cone': return 'Victory Cones:';
+        case 'overall_shot': return 'Overall Shots:';
+        case 'pg_shot': return 'Pre-Game/Break Shots:';
+        case 'l_shot': return 'Losing Shots:';
+        case 'c_shot': return 'Coin Flip Shots:';
+        case 'w_shot': return 'Wheel Shots:';
+        case 'v_shot': return 'Victory Shots:';
         case 'overall_point': return 'Overall Points:';
         case 'g_point': return 'Game Points:';
         case 'c_point': return 'Coin Flip Points:';

@@ -23,6 +23,8 @@ import {
     split
 } from '../js/utils.js';
 
+let gog_version = 'private' // public vs private
+
 const BASE_URL = 'http://localhost:3000';
 const urlParams = new URLSearchParams(window.location.search);
 const sessionId = urlParams.get('sessionId');
@@ -62,6 +64,7 @@ let otherWelcome = document.getElementById('top-title');
 let gameTitle = document.getElementById('title');
 let four20game = document.getElementById('four20game');
 let wheelCone = document.getElementById('wheelCone');
+let wheelShot = document.getElementById('wheelShot');
 let askNeigh = document.getElementById('askNeigh');
 let askNeighSection = document.getElementById('askNeigh-section');
 let gameWheelDiv = document.getElementById('game_wheel');
@@ -77,6 +80,7 @@ let headerRightBtn = document.getElementById('right-mode-button');
 let currGame = {};
 let vote = false;
 let cone = false;
+let shot = false;
 let player_team = false;
 let wheel_first = false;
 
@@ -149,6 +153,8 @@ function reward(result) {
 
     if (text.includes('1 cone')) {
         type = 'cone';
+    } else if (text.includes('1 shot')) {
+        type = 'shot';
     } else if (text.includes('point')) {
         num = parseInt(text.split(' ')[0]);
         type = 'point';
@@ -166,14 +172,17 @@ function reward(result) {
         if (type == 'point' && num == 1) text = 'Nothing';
         if (type == 'nothing') text = '-1 point';
         if (type == 'cone') text = '1 cone & -1 point';    
+        if (type == 'shot') text = '1 shot & -1 point';    
     } else if (isSpeciality && result.place != 1 && coin) {
         if (type == 'point' && num == 1) text = '1 coin flip point & -1 point';
         if (type == 'nothing') text = 'Nothing from coin flip & -1 point';
         if (type == 'cone') text = '1 coin flip cone & -1 point';
+        if (type == 'shot') text = '1 coin flip shot & -1 point';
     } else if (!isSpeciality && coin) {
         if (type == 'point') text = '1 coin flip point';
         if (type == 'nothing') text = 'Nothing from coin flip';
         if (type == 'cone') text = '1 coin flip cone';
+        if (type == 'shot') text = '1 coin flip shot';
     }
 
     result.reward = text;
@@ -213,6 +222,10 @@ function getPointsSystem(num) {
     if (currSystem == 'Points & Cones') {
         return allSystems.find(s => {
             return s.type == 'cones' && s.num_players == num;
+        })?.rewards;
+    } else if (currSystem == 'Points & Shots') {
+        return allSystems.find(s => {
+            return s.type == 'shots' && s.num_players == num;
         })?.rewards;
     } else if (currSystem == 'Just Points') {
         return allSystems.find(s => {
@@ -284,6 +297,8 @@ function closeGameBox(to) {
             abandonBtn.style.display = 'none';
             breakConeBtn.style.display = 'none';
             victoryConeBtn.style.display = 'none';
+            breakShotBtn.style.display = 'none';
+            victoryShotBtn.style.display = 'none';
 
             if (gameSelection == 'Choose') {
                 choose.parentElement.style.display = 'none';
@@ -662,6 +677,7 @@ function spinWheel(type) {
     console.log(type);
     if (type == 'games' && theGameWheel) theGameWheel.startAnimation();
     if (type == 'cone' && thePlayerWheel) thePlayerWheel.startAnimation();
+    if (type == 'shot' && thePlayerWheel) thePlayerWheel.startAnimation();
 }
 
 // Handle spin result
@@ -675,8 +691,14 @@ function onSpinEnd(indicatedSegment, type) {
         if (result == 'CONE') {
             cone = true;
             old_sectors = [...sectors];
-            otherWelcome.innerHTML = 'Wheel Cone';
+            otherWelcome.innerHTML = 'Cone Wheel';
             replaceSectors('cone', shuffle(currPlayers.map(p => p.name)));
+            playerWheelDiv.style.display = 'flex';
+        } else if (result == 'SHOT') {
+            shot = true;
+            old_sectors = [...sectors];
+            otherWelcome.innerHTML = 'Shot Wheel';
+            replaceSectors('shot', shuffle(currPlayers.map(p => p.name)));
             playerWheelDiv.style.display = 'flex';
         } else {
             //growFromBoxToModal(box, modal, gameModal, curr_colour, () => {
@@ -707,14 +729,14 @@ function onSpinEnd(indicatedSegment, type) {
         centerDiv.style.justifyContent = 'flex-start';
         centerDiv.style.gap = '5rem';
 
-        const ratatouille = document.getElementById('ratatouille');
+        const ratatouille = document.getElementById('ratatouille-private');
         ratatouille.innerHTML =
             result == 'EVERYONE' ? 'Ratatouille Everyone!' :
             result == 'NO ONE' ? 'No one is having a cone lol' :
             `Ratatouille ${result}!`;
 
         
-        const completeBtn = document.getElementById('wheelComplete');
+        const completeBtn = document.getElementById('wheelComplete-private');
         completeBtn.style.display = 'flex';
         completeBtn.style.textShadow = 'none';
         completeBtn.addEventListener('click', () => {
@@ -737,6 +759,46 @@ function onSpinEnd(indicatedSegment, type) {
             otherWelcome.innerHTML = `Game ${gameNumber}`;
             otherWelcome.style.display = 'flex';
             const games = old_sectors.filter(s => s.text != 'CONE');
+            replaceSectors('games', shuffle(games.map(s => s.text)));
+        });
+    } else if (type == 'shot') {
+        console.log(old_sectors);
+        console.log(sectors);
+        playerWheelDiv.style.display = 'none';
+        wheelShot.style.display = 'flex';
+        centerDiv.style.justifyContent = 'flex-start';
+        centerDiv.style.gap = '5rem';
+
+        const ratatouille = document.getElementById('ratatouille-public');
+        ratatouille.innerHTML =
+            result == 'EVERYONE' ? 'Ratatouille Everyone!' :
+            result == 'NO ONE' ? 'No one is having a shot lol' :
+            `Ratatouille ${result}!`;
+
+        
+        const completeBtn = document.getElementById('wheelComplete-public');
+        completeBtn.style.display = 'flex';
+        completeBtn.style.textShadow = 'none';
+        completeBtn.addEventListener('click', () => {
+            const lastGame = theGame.games.at(-1);
+            if (result == 'EVERYONE') {
+                currPlayers.forEach(p => logShot(p.player_id, 'wheel'));
+                if (lastGame) lastGame.after.push('Everyone had a WHEEL shot');
+            } else if (result != 'NO ONE') {
+                let player = currPlayers.find(p => p.name == result);
+                if (player) logShot(player.player_id, 'wheel');
+                if (lastGame) lastGame.after.push(`${p.name} had a WHEEL shot`);
+            } else if (lastGame) {
+                lastGame.after.push('The shot wheel was spun but no one had a shot');
+            }
+            
+            shot = false;
+            wheelShot.style.display = 'none';
+            playerWheelDiv.style.display = 'none';
+
+            otherWelcome.innerHTML = `Game ${gameNumber}`;
+            otherWelcome.style.display = 'flex';
+            const games = old_sectors.filter(s => s.text != 'SHOT');
             replaceSectors('games', shuffle(games.map(s => s.text)));
         });
     } else if (player_team) {
@@ -801,7 +863,8 @@ function replaceSectors(type, options) {
     console.log(options);
     let typeId =
         type == 'games' || type == 'five_crowns' ? 'wheelCanvas' :
-        type == 'cone' || type == 'players' ? 'wheelCanvas2' : null;
+        type == 'cone' || type == 'shot' || type == 'players' ? 'wheelCanvas2' :
+        null;
     
     if (!typeId) {
         console.log(`CANVAS ERROR: ${type} - ${typeId}`);
@@ -844,18 +907,22 @@ function replaceSectors(type, options) {
 
     if (type == 'games') {
         const size = 360 / (options.length + 0.5);
-        const coneSize = size / 2;
+        const small = size / 2;
 
         sectors = options.map(text => ({ text, size }));
-        sectors.push({ text: 'CONE', size: coneSize });
+        if (gog_version == 'private') {
+            sectors.push({ text: 'CONE', size: small });
+        } else if (gog_version == 'public') {
+            sectors.push({ text: 'SHOT', size: small });
+        }
         sectors = shuffle(sectors);
         sectors.forEach((s,i) => s.fillStyle = gradient(i));
 
         theGameWheel = wheel(sectors);
         gameWheelDiv.style.display = 'flex';
-    
-    } else if (type == 'cone') {
-        old_sectors = sectors;
+
+    } else if (type == 'cone' || type == 'shot') {
+        old_sectors = [...sectors];
         
         const size = 360 / (options.length + 1);
         const otherSize = size / 2;
@@ -868,7 +935,7 @@ function replaceSectors(type, options) {
 
         thePlayerWheel = wheel(sectors);
         playerWheelDiv.style.display = 'flex';
-    
+
     } else if (type == 'players') {
         const size = 360 / options.length;
     
@@ -1352,9 +1419,19 @@ function createCoin(size, results, coins, box, result) {
 
         currCoin.result = newResult;
         if (newResult == guess) {
-            result.reward = type == 'pn' || type == 'pc' ? '1 point' : type == 'nc' ? 'Nothing' : '1 cone';
+            if (type == 'pn' || type == 'pc' || type == 'ps') {
+                result.reward = '1 point';
+            } else if (type == 'nc' || type == 'ns') {
+                result.reward = 'Nothing';
+            }
         } else {
-            result.reward = type == 'pc' || type == 'nc' ? '1 cone' : type == 'pn' ? 'Nothing' : '1 cone';
+            if (type == 'pc' || type == 'nc') {
+                result.reward = '1 cone';
+            } else if (type == 'ps' || type == 'ns') {
+                result.reward = '1 shot'
+            } else if (type == 'pn') {
+                result.reward = 'Nothing';
+            }
         }
         currCoin.reward = result.reward;
 
@@ -1562,7 +1639,8 @@ function setupIntrude() {
         specialityDiv.className = 'intrude-game-player-specialities';
         playerDiv.appendChild(specialityDiv);
         
-        const text = currSystem == 'Points & Cones' ? 'Ratatouille' : 'Welcome';
+        const text = currSystem == 'Points & Cones' || currSystem == 'Points & Shots' ?
+                                    'Ratatouille' : 'Welcome';
         const welcome = header('h3', `${text} ${p.name}!`);
         welcome.style.display = 'none';
         welcome.id = `intruder-welcome-${p.player_id}`;
@@ -1798,6 +1876,11 @@ async function intrude() {
             c_cone: 0,
             w_cone: 0,
             v_cone: 0,
+            pg_shot: 1,
+            l_shot: 0,
+            c_shot: 0,
+            w_shot: 0,
+            v_shot: 0,
             g_point: 0,
             c_point: 0,
             special_w_point: 0,
@@ -2178,7 +2261,7 @@ const breakConeModal = document.getElementById('breakConeModal');
 const breakConeBox = document.getElementById('break-cone-box');
 const breakConeResultDiv = document.getElementById('break-cone-result');
 const breakConeGameBtn = document.getElementById('break-cone-button');
-let breakOptions = [];
+let breakConeOptions = [];
 
 function openBreakCone() {
     curr_colour.hex = '#33eaff';
@@ -2200,11 +2283,11 @@ function setupBreakCone() {
 
     const breakDiv = document.getElementById('break-cone-players');
     breakDiv.innerHTML = '';
-    breakOptions = [];
+    breakConeOptions = [];
 
     currPlayers.sort((a, b) => a.name.localeCompare(b.name))
     .forEach(p => {
-        breakOptions.push({
+        breakConeOptions.push({
             player_id: p.player_id,
             name: p.name,
             selected: false
@@ -2218,10 +2301,10 @@ function setupBreakCone() {
             btn.style.backgroundColor = not ? p.colour : 'white';
             btn.style.color = not ? hexToTextColour(p.colour) : 'black';
 
-            let option = breakOptions.find(o => o.player_id == p.player_id);
+            let option = breakConeOptions.find(o => o.player_id == p.player_id);
             if (option) option.selected = !option.selected;
 
-            let names = breakOptions.filter(p => p.selected).map(p => p.name);
+            let names = breakConeOptions.filter(p => p.selected).map(p => p.name);
             if (names.length != 0) {
                 breakConeResultDiv.textContent = `Ratatouille ${format(names)}`;
                 breakConeResultDiv.style.display = 'flex';
@@ -2241,14 +2324,14 @@ function setupBreakCone() {
 
 async function breakCone() {
     let game = theGame.games.at(-1);
-    breakOptions.filter(p => p.selected).forEach(p => {
+    breakConeOptions.filter(p => p.selected).forEach(p => {
         if (game) game.after.push(`${p.name} had a BREAK cone`);
         logCone(p.player_id, 'break');
     });
     
     const players = currPlayers.filter(p => {
         const id = p.player_id;
-        return breakOptions.find(b => b.player_id == id)?.selected;
+        return breakConeOptions.find(b => b.player_id == id)?.selected;
     });
     await fetch(`${BASE_URL}/api/sessions/${sessionId}/break_cone`, {
         method: 'POST',
@@ -2283,7 +2366,7 @@ const victoryConeModal = document.getElementById('victoryConeModal');
 const victoryConeBox = document.getElementById('victory-cone-box');
 const victoryConeResultDiv = document.getElementById('victory-cone-result');
 const victoryConeGameBtn = document.getElementById('victory-cone-button');
-let victoryOptions = [];
+let victoryConeOptions = [];
 
 function openVictoryCone() {
     curr_colour.hex = '#33eaff';
@@ -2305,7 +2388,7 @@ function setupVictoryCone() {
 
     const victoryDiv = document.getElementById('victory-cone-players');
     victoryDiv.innerHTML = '';
-    victoryOptions = [];
+    victoryConeOptions = [];
 
     if (theGame.games.length == 0) {
         victoryDiv.appendChild(header(
@@ -2321,7 +2404,7 @@ function setupVictoryCone() {
     winners.forEach(w => {
         const player = allPlayers.find(p => p.player_id == w.player_id);
         
-        victoryOptions.push({
+        victoryConeOptions.push({
             player_id: w.player_id,
             name: player.name,
             selected: false
@@ -2335,10 +2418,10 @@ function setupVictoryCone() {
             btn.style.backgroundColor = not ? player.colour : 'white';
             btn.style.color = not ? hexToTextColour(player.colour) : 'black';
 
-            let option = victoryOptions.find(o => o.player_id == w.player_id);
+            let option = victoryConeOptions.find(o => o.player_id == w.player_id);
             if (option) option.selected = !option.selected;
 
-            let names = victoryOptions.filter(p => p.selected).map(p => p.name);
+            let names = victoryConeOptions.filter(p => p.selected).map(p => p.name);
             if (names.length != 0) {
                 victoryConeResultDiv.innerHTML = '';
                 victoryConeResultDiv.textContent = `Ratatouille ${format(names)}`;
@@ -2364,14 +2447,14 @@ function setupVictoryCone() {
 
 async function victoryCone() {
     let game = theGame.games.at(-1);
-    victoryOptions.filter(p => p.selected).forEach(p => {
+    victoryConeOptions.filter(p => p.selected).forEach(p => {
         if (game) game.after.push(`${p.name} had a VICTORY cone`);
         logCone(p.player_id, 'victory');
     });
     
     const players = currPlayers.filter(p => {
         const id = p.player_id;
-        return victoryOptions.find(b => b.player_id == id)?.selected;
+        return victoryConeOptions.find(b => b.player_id == id)?.selected;
     });
     await fetch(`${BASE_URL}/api/sessions/${sessionId}/victory_cone`, {
         method: 'POST',
@@ -2386,6 +2469,234 @@ function closeVictoryCone() {
     closeModal(victoryConeModal, victoryConeBox, 'down', '', () => {
         victoryConeResultDiv.style.display = 'none';
         victoryConeGameBtn.style.display = 'none';
+    });
+}
+
+// #endregion
+
+
+// ----------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------------
+//
+//              Break Shot
+//
+
+
+// #region
+
+const breakShotBtn = document.getElementById('break');
+const breakShotModal = document.getElementById('breakShotModal');
+const breakShotBox = document.getElementById('break-shot-box');
+const breakShotResultDiv = document.getElementById('break-shot-result');
+const breakShotGameBtn = document.getElementById('break-shot-button');
+let breakShotOptions = [];
+
+function openBreakShot() {
+    curr_colour.hex = '#33eaff';
+    curr_colour.rgba = hexToRgba('#33eaff', 0.85);
+    curr_colour.text = '#000000';
+
+    openModalWithFakeGrow(
+        breakShotBtn,
+        breakShotModal,
+        breakShotBox,
+        curr_colour,
+        setupBreakShot()
+    );
+}
+
+function setupBreakShot() {
+    breakShotResultDiv.style.display = 'none';
+    breakShotGameBtn.style.display = 'none';
+
+    const breakDiv = document.getElementById('break-shot-players');
+    breakDiv.innerHTML = '';
+    breakShotOptions = [];
+
+    currPlayers.sort((a, b) => a.name.localeCompare(b.name))
+    .forEach(p => {
+        breakShotOptions.push({
+            player_id: p.player_id,
+            name: p.name,
+            selected: false
+        });
+
+        const btn = createButton('', 'middle-game-button break-shot-player', '');
+        styleButton(btn, 'black', 'white', null, 'flex');
+        btn.addEventListener('click', () => {
+            btn.classList.toggle('break-shot-selected');
+            const not = btn.style.backgroundColor == 'white';
+            btn.style.backgroundColor = not ? p.colour : 'white';
+            btn.style.color = not ? hexToTextColour(p.colour) : 'black';
+
+            let option = breakShotOptions.find(o => o.player_id == p.player_id);
+            if (option) option.selected = !option.selected;
+
+            let names = breakShotOptions.filter(p => p.selected).map(p => p.name);
+            if (names.length != 0) {
+                breakShotResultDiv.textContent = `Ratatouille ${format(names)}`;
+                breakShotResultDiv.style.display = 'flex';
+                breakShotGameBtn.style.display = 'flex';
+            } else {
+                breakShotResultDiv.style.display = 'none';
+                breakShotGameBtn.style.display = 'none';
+            }
+        });
+        btn.appendChild(header('h2', p.name));
+        breakDiv.appendChild(btn);
+    });
+
+    breakShotGameBtn.removeEventListener('click', breakShot);
+    breakShotGameBtn.addEventListener('click', breakShot);
+}
+
+async function breakShot() {
+    let game = theGame.games.at(-1);
+    breakShotOptions.filter(p => p.selected).forEach(p => {
+        if (game) game.after.push(`${p.name} had a BREAK shot`);
+        logShot(p.player_id, 'break');
+    });
+    
+    const players = currPlayers.filter(p => {
+        const id = p.player_id;
+        return breakShotOptions.find(b => b.player_id == id)?.selected;
+    });
+    await fetch(`${BASE_URL}/api/sessions/${sessionId}/break_shot`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game, players })
+    });
+
+    closeBreakShot();
+}
+
+function closeBreakShot() {
+    closeModal(breakShotModal, breakShotBox, 'down', '', () => {
+        breakShotResultDiv.style.display = 'none';
+        breakShotGameBtn.style.display = 'none';
+    });
+}
+
+// #endregion
+
+
+// ----------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------------
+//
+//              Victory Shot
+//
+
+
+// #region
+
+const victoryShotBtn = document.getElementById('victory');
+const victoryShotModal = document.getElementById('victoryShotModal');
+const victoryShotBox = document.getElementById('victory-shot-box');
+const victoryShotResultDiv = document.getElementById('victory-shot-result');
+const victoryShotGameBtn = document.getElementById('victory-shot-button');
+let victoryShotOptions = [];
+
+function openVictoryShot() {
+    curr_colour.hex = '#33eaff';
+    curr_colour.rgba = hexToRgba('#33eaff', 0.85);
+    curr_colour.text = '#000000';
+
+    openModalWithFakeGrow(
+        victoryShotBtn,
+        victoryShotModal,
+        victoryShotBox,
+        curr_colour,
+        setupVictoryShot()
+    );
+}
+
+function setupVictoryShot() {
+    victoryShotResultDiv.style.display = 'none';
+    victoryShotGameBtn.style.display = 'none';
+
+    const victoryDiv = document.getElementById('victory-shot-players');
+    victoryDiv.innerHTML = '';
+    victoryShotOptions = [];
+
+    if (theGame.games.length == 0) {
+        victoryDiv.appendChild(header(
+            'h2',
+            `No one yet! Play a game, then we'll talk.`
+        ));
+        return;
+    }
+    
+    let lastGame = theGame.games.at(-1);
+    console.log(lastGame.results);
+    const winners = lastGame.results.filter(r => r.place == 1);
+    winners.forEach(w => {
+        const player = allPlayers.find(p => p.player_id == w.player_id);
+        
+        victoryShotOptions.push({
+            player_id: w.player_id,
+            name: player.name,
+            selected: false
+        });
+
+        const btn = createButton('', 'middle-game-button victory-shot-player', '');
+        styleButton(btn, 'black', 'white', 'none', 'flex');
+        btn.addEventListener('click', () => {
+            btn.classList.toggle('victory-shot-selected');
+            const not = btn.style.backgroundColor == 'white';
+            btn.style.backgroundColor = not ? player.colour : 'white';
+            btn.style.color = not ? hexToTextColour(player.colour) : 'black';
+
+            let option = victoryShotOptions.find(o => o.player_id == w.player_id);
+            if (option) option.selected = !option.selected;
+
+            let names = victoryShotOptions.filter(p => p.selected).map(p => p.name);
+            if (names.length != 0) {
+                victoryShotResultDiv.innerHTML = '';
+                victoryShotResultDiv.textContent = `Ratatouille ${format(names)}`;
+                victoryShotResultDiv.style.display = 'flex';
+                victoryShotGameBtn.style.display = 'flex';
+            } else {
+                victoryShotResultDiv.style.display = 'none';
+                victoryShotGameBtn.style.display = 'none';
+            }
+        });
+        btn.appendChild(header('h2', player.name));
+        victoryDiv.appendChild(btn);
+    });
+    if (winners.length == 0) {
+        victoryDiv.appendChild(header(
+            'h2', `No one lol! You're all a bunch of losers somehow!`
+        ));
+    }
+
+    victoryShotGameBtn.removeEventListener('click', victoryShot);
+    victoryShotGameBtn.addEventListener('click', victoryShot);
+}
+
+async function victoryShot() {
+    let game = theGame.games.at(-1);
+    victoryShotOptions.filter(p => p.selected).forEach(p => {
+        if (game) game.after.push(`${p.name} had a VICTORY shot`);
+        logShot(p.player_id, 'victory');
+    });
+    
+    const players = currPlayers.filter(p => {
+        const id = p.player_id;
+        return victoryShotOptions.find(b => b.player_id == id)?.selected;
+    });
+    await fetch(`${BASE_URL}/api/sessions/${sessionId}/victory_shot`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game, players })
+    });
+
+    closeVictoryShot();
+}
+
+function closeVictoryShot() {
+    closeModal(victoryShotModal, victoryShotBox, 'down', '', () => {
+        victoryShotResultDiv.style.display = 'none';
+        victoryShotGameBtn.style.display = 'none';
     });
 }
 
@@ -3783,7 +4094,8 @@ function generateBetrayalResults() {
     const team = currPlayers.filter(p => p.name != traitorPlayer.name);
     let results = [];
 
-    let loss = currSystem == 'Points & Cones' ? '1 cone' : 'Nothing';
+    let loss = currSystem == 'Points & Cones' ? '1 cone' :
+            currSystem == 'Points & Shots' ? '1 shot' : 'Nothing';
     if (traitor.style.background == gold) {
         results.push({
             player_id: traitorPlayer.player_id,
@@ -5480,7 +5792,8 @@ function createSingle() {
 
 function generateSingleResults() {
     let results = [];
-    let loss = currSystem == 'Points & Cones' ? '1 cone' : 'Nothing';
+    let loss = currSystem == 'Points & Cones' ? '1 cone' :
+            currSystem == 'Points & Shots' ? '1 shot' : 'Nothing';
     currPlayers.forEach(p => {
         const div = document.getElementById(`${p.name}_single_box`);
         const win = div.style.background == gold;
@@ -5713,7 +6026,8 @@ function playTeam() {
 
 async function generateTeamResults() {
     let results = [];
-    let loss = currSystem == 'Points & Cones' ? '1 cone' : 'Nothing';
+    let loss = currSystem == 'Points & Cones' ? '1 cone' :
+            currSystem == 'Points & Shots' ? '1 shot' : 'Nothing';
     if (currTeams.length == 2) {
         const teamPlayers = document.getElementById('teamPlayers');
         Array.from(teamPlayers.children).filter(t => t.className != 'versus')
@@ -6151,7 +6465,8 @@ function renderMatchTeamPoints(team1, team2, win_score, win_margin) {
 
 async function generateTeamPointsResults() {
     let results = [];
-    const loss = currSystem == 'Points & Cones' ? '1 cone' : 'Nothing';
+    let loss = currSystem == 'Points & Cones' ? '1 cone' :
+            currSystem == 'Points & Shots' ? '1 shot' : 'Nothing';
     if (currPointTeams.length == 2) {
         console.log(teamPointsResults);
         const game = teamPointsResults.find(r => r.game_num == gameNumber);
@@ -6788,50 +7103,97 @@ function showOverallResults() {
     overall.innerHTML = '';
     let results = [];
 
-    theGame.players.forEach(p => {
-        const points = p.g_point + p.c_point + p.special_w_point + p.special_l_point;
-        const cones = p.pg_cone + p.f20g_cone + p.l_cone + p.c_cone + p.w_cone + p.v_cone;
-        results.push({ name: p.name, points, cones });
-    });
+    if (gog_version == 'private') {
+        theGame.players.forEach(p => {
+            const points = p.g_point + p.c_point + p.special_w_point + p.special_l_point;
+            const cones = p.pg_cone + p.f20g_cone + p.l_cone + p.c_cone + p.w_cone + p.v_cone;
+            results.push({ name: p.name, points, cones });
+        });
 
-    results.sort((a, b) => {
-        const comparePoints = b.points - a.points;
-        const compareCones = a.cones - b.cones;
-        return comparePoints != 0 ? comparePoints :
-                compareCones != 0 ? compareCones : a.name.localeCompare(b.name);
-    });
-    
-    let currentPlace = 1;
-    let extraPlaces = 0;
-    results.forEach((result, index) => {
-        if (index != 0) {
-            if (result.points == results[index - 1].points && result.cones == results[index - 1].cones) {
-                extraPlaces++;
-            } else {
-                currentPlace += extraPlaces + 1;
-                extraPlaces = 0;
+        results.sort((a, b) => {
+            const comparePoints = b.points - a.points;
+            const compareCones = a.cones - b.cones;
+            return comparePoints != 0 ? comparePoints :
+                    compareCones != 0 ? compareCones : a.name.localeCompare(b.name);
+        });
+
+        let currentPlace = 1;
+        let extraPlaces = 0;
+        results.forEach((result, index) => {
+            if (index != 0) {
+                if (result.points == results[index - 1].points && result.cones == results[index - 1].cones) {
+                    extraPlaces++;
+                } else {
+                    currentPlace += extraPlaces + 1;
+                    extraPlaces = 0;
+                }
             }
-        }
-        result.place = currentPlace;
-    });
+            result.place = currentPlace;
+        });
 
-    console.log(results);
-    results.forEach(r => {
-        const box = document.createElement('div');
-        box.className = 'curr_game_box';
-        box.style.background = placeColour(r.place);
-        box.style.color = 'black';
+        console.log(results);
+        results.forEach(r => {
+            const box = document.createElement('div');
+            box.className = 'curr_game_box';
+            box.style.background = placeColour(r.place);
+            box.style.color = 'black';
 
-        let points = r.points != 1 && r.points != -1 ?
-                    `${r.points} points` : `${r.points} point`;
-        let cones = r.cones != 1 ? `${r.cones} cones` : `${r.cones} cone`;
+            let points = r.points != 1 && r.points != -1 ?
+                        `${r.points} points` : `${r.points} point`;
+            let cones = r.cones != 1 ? `${r.cones} cones` : `${r.cones} cone`;
 
-        box.appendChild(header('h2', `${place(r.place)} - ${r.name}`));
-        box.appendChild(header('h3', points));
-        box.appendChild(header('h3', cones));
+            box.appendChild(header('h2', `${place(r.place)} - ${r.name}`));
+            box.appendChild(header('h3', points));
+            box.appendChild(header('h3', cones));
 
-        overall.appendChild(box);
-    });
+            overall.appendChild(box);
+        });
+    } else if (gog_version == 'public') {
+        theGame.players.forEach(p => {
+            const points = p.g_point + p.c_point + p.special_w_point + p.special_l_point;
+            const shots = p.pg_shot + p.l_shot + p.c_shot + p.w_shot + p.v_shot;
+            results.push({ name: p.name, points, shots });
+        });
+        
+        results.sort((a, b) => {
+            const comparePoints = b.points - a.points;
+            const compareShots = a.shots - b.shots;
+            return comparePoints != 0 ? comparePoints :
+                    compareShots != 0 ? compareShots : a.name.localeCompare(b.name);
+        });
+
+        let currentPlace = 1;
+        let extraPlaces = 0;
+        results.forEach((result, index) => {
+            if (index != 0) {
+                if (result.points == results[index - 1].points && result.shots == results[index - 1].shots) {
+                    extraPlaces++;
+                } else {
+                    currentPlace += extraPlaces + 1;
+                    extraPlaces = 0;
+                }
+            }
+            result.place = currentPlace;
+        });
+
+        console.log(results);
+        results.forEach(r => {
+            const box = document.createElement('div');
+            box.className = 'curr_game_box';
+            box.style.background = placeColour(r.place);
+            box.style.color = 'black';
+
+            let points = r.points != 1 && r.points != -1 ?
+                        `${r.points} points` : `${r.points} point`;
+            let shots = r.shots != 1 ? `${r.shots} shots` : `${r.shots} shot`;
+
+            box.appendChild(header('h2', `${place(r.place)} - ${r.name}`));
+            box.appendChild(header('h3', points));
+            box.appendChild(header('h3', shots));
+
+            overall.appendChild(box);
+        });
+    }
 
     overall.style.display = 'flex';
 }
@@ -6892,6 +7254,10 @@ function logResults(results) {
             logCone(r.player_id, 'coin');
         } else if (r.reward.includes('1 cone')) {
             logCone(r.player_id, 'loss');
+        } else if (r.reward.includes('1 coin flip shot')) {
+            logShot(r.player_id, 'coin');
+        } else if (r.reward.includes('1 shot')) {
+            logShot(r.player_id, 'loss');
         } else if (r.reward.includes('1 coin flip point')) {
             logPoint(r.player_id, 'coin');
         } else if (r.reward.includes('point') && num != -1) {
@@ -6916,6 +7282,19 @@ function logCone(id, type) {
         case 'coin': player.c_cone++; break;
         case 'wheel': player.w_cone++; break;
         case 'victory': player.v_cone++; break;
+        default: console.error(`Error with point type: ${type}`);
+    }
+}
+
+function logShot(id, type) {
+    let player = overallPlayers.find(p => p.player_id == id);
+    if (!player) return;
+    switch (type) {
+        case 'pre-game': case 'break': player.pg_shot++; break;
+        case 'loss': player.l_shot++; break;
+        case 'coin': player.c_shot++; break;
+        case 'wheel': player.w_shot++; break;
+        case 'victory': player.v_shot++; break;
         default: console.error(`Error with point type: ${type}`);
     }
 }
@@ -7164,15 +7543,11 @@ async function submitGame() {
         box = document.createElement('div');
         box.id = `coin_box`;
     }
-    /*let coins = [];
-    let size = 0;
-    results.forEach(result => {
-        console.log(result.reward, ' --- ', result.base);
-        if (result.reward != '1 cone' && !result.reward.includes('point')) size++;
-    });*/
+
     let coins = [];
     const resultCoins = results.filter(r => {
-        return r.base == 'pn' || r.base == 'pc' || r.base == 'nc';
+        return r.base == 'pn' || r.base == 'pc' ||
+        r.base == 'nc' || r.base == 'ps' || r.base == 'ns';
     });
     resultCoins.forEach(result => {
         coins.push(createCoin(resultCoins.length, results, coins, box, result));
@@ -7229,8 +7604,13 @@ function nextGame(from) {
     updateHeaderButtons('show');
     intrudeBtn.style.display = 'flex';
     abandonBtn.style.display = 'flex';
-    breakConeBtn.style.display = 'flex';
-    victoryConeBtn.style.display = 'flex';
+    if (gog_version == 'private') {
+        breakConeBtn.style.display = 'flex';
+        victoryConeBtn.style.display = 'flex';
+    } else if (gog_version == 'public') {
+        breakShotBtn.style.display = 'flex';
+        victoryShotBtn.style.display = 'flex';
+    }
 
     if (currGame.name == '4:20 Game') {
         four20game.style.display = 'none';
@@ -7273,6 +7653,7 @@ function nextGame(from) {
     gameTitle.innerText = `Game ${gameNumber}`;
     four20game.style.display = 'none';
     wheelCone.style.display = 'none';
+    wheelShot.style.display = 'none';
     askNeigh.style.display = 'none';
 
     if (gameSelection == 'Choose') openChoosing();
@@ -7300,16 +7681,23 @@ function noSession() {
 
     document.getElementById('finish').style.display = 'none';
 
-    //updateHeaderButtons('start');
-    //welcome.style.display = newGame ? 'flex' : 'none';
-    //otherWelcome.innerHTML = newGame ? '' : `Game ${gameNumber}`;
+    /*
+    updateHeaderButtons('start');
+    welcome.style.display = newGame ? 'flex' : 'none';
+    otherWelcome.innerHTML = newGame ? '' : `Game ${gameNumber}`;
 
-    //intrudeBtn.style.display = newGame ? 'none': 'flex';
-    //abandonBtn.style.display = newGame ? 'none': 'flex';
-    //breakConeBtn.style.display = 'flex';
-    //victoryConeBtn.style.display = 'flex';
+    intrudeBtn.style.display = newGame ? 'none': 'flex';
+    abandonBtn.style.display = newGame ? 'none': 'flex';
+    if (gog_version == 'private') {
+        breakConeBtn.style.display = 'flex';
+        victoryConeBtn.style.display = 'flex';
+    } else if (gog_version == 'public') {
+        breakShotBtn.style.display = 'flex';
+        victoryShotBtn.style.display = 'flex';
+    }
 
-    //currPlayers = display(currPlayers);
+    currPlayers = display(currPlayers);
+    */
 
 }
 
@@ -7375,15 +7763,21 @@ function initialiseButtons() {
             if (btn.id == 'intrude') openIntrude();
             if (btn.id == 'abandon') openAbandon();
             if (btn.id == 'vote') submitVotes();
-            if (btn.id == 'break') openBreakCone();
-            if (btn.id == 'victory') openVictoryCone();
+            if (btn.id == 'break-cone') openBreakCone();
+            if (btn.id == 'victory-cone') openVictoryCone();
+            if (btn.id == 'break-shot') openBreakShot();
+            if (btn.id == 'victory-shot') openVictoryShot();
         });
     });
 
     const spin = document.getElementById('spin');
     if (spin) spin.addEventListener('click', () => spinWheel('games'));
     const spin2 = document.getElementById('spin2');
-    if (spin2) spin2.addEventListener('click', () => spinWheel('cone'));
+    if (spin2 && gog_version == 'private') {
+        spin2.addEventListener('click', () => spinWheel('cone'));
+    } else if (spin2 && gog_version == 'public') {
+        spin2.addEventListener('click', () => spinWheel('shot'));
+    }
 }
 
 async function loadSessionData(sessionId) {
@@ -7551,17 +7945,23 @@ function startGoG(newGame) {
 
     intrudeBtn.style.display = newGame ? 'none': 'flex';
     abandonBtn.style.display = newGame ? 'none': 'flex';
-    breakConeBtn.style.display = newGame ? 'none' : 'flex';
-    victoryConeBtn.style.display = newGame ? 'none' : 'flex';
+    if (gog_version == 'private') {
+        breakConeBtn.style.display = newGame ? 'none' : 'flex';
+        victoryConeBtn.style.display = newGame ? 'none' : 'flex';
+    } else if (gog_version == 'public') {
+        breakShotBtn.style.display = newGame ? 'none' : 'flex';
+        victoryShotBtn.style.display = newGame ? 'none' : 'flex';
+    }
 
     const result = document.getElementById('pre-game-result');
-    /*if (newGame && currSystem == 'Points & Cones') {
-        const div = document.getElementById('pre-game');
+    /*
+    if (newGame && currSystem == 'Points & Cones') {
+        const div = document.getElementById('pre-game-private');
         
         result.style.display = 'flex';
         div.style.display = 'flex';
     
-        const yesBtn = document.getElementById('pre-game-yes');
+        const yesBtn = document.getElementById('pre-game-private-yes');
         yesBtn.addEventListener('click', () => {
             currPlayers.forEach(p => logCone(p.player_id, 'pre-game'));
             result.style.display = 'none';
@@ -7569,7 +7969,7 @@ function startGoG(newGame) {
             start();
         });
 
-        const noBtn = document.getElementById('pre-game-no');
+        const noBtn = document.getElementById('pre-game-private-no');
         const options = [
             'Pre-game cone is non-negotiable.',
             `No cone, no game. Them's the rules.`,
@@ -7580,6 +7980,38 @@ function startGoG(newGame) {
             'The Game of Games Gods are displeased.',
             `Don't make me get Cam.`,
             'Do not pass go. Do not collect 200 cones.'
+        ];
+        let i = 0;
+        noBtn.addEventListener('click', () => {
+            result.textContent = `${options[i]}`;
+            result.style.display = 'flex';
+            i = i == options.length - 1 ? 0 : i + 1;
+        });
+    } else if (newGame && currSystem == 'Points & Shots') {
+        const div = document.getElementById('pre-game-public');
+        
+        result.style.display = 'flex';
+        div.style.display = 'flex';
+    
+        const yesBtn = document.getElementById('pre-game-public-yes');
+        yesBtn.addEventListener('click', () => {
+            currPlayers.forEach(p => logShot(p.player_id, 'pre-game'));
+            result.style.display = 'none';
+            div.style.display = 'none';
+            start();
+        });
+
+        const noBtn = document.getElementById('pre-game-public-no');
+        const options = [
+            'Pre-game shot is non-negotiable.',
+            `No shot, no game. Them's the rules.`,
+            `Come on, we've talked about this.`,
+            'JUST FUCKING DO IT!!!',
+            'You have *one* job here.',
+            `This is why we can't have nice things.`,
+            'The Game of Games Gods are displeased.',
+            `Don't make me get Cam.`,
+            'Do not pass go. Do not collect 200 shots.'
         ];
         let i = 0;
         noBtn.addEventListener('click', () => {
@@ -7631,36 +8063,69 @@ async function finishGoG() {
     theGame.finish_time = new Date();
     theGame.final_results = [];
 
-    theGame.players.forEach(p => {
-        theGame.final_results.push({
-            player_id: p.player_id,
-            name: p.name,
-            points: p.g_point + p.c_point + p.special_w_point + p.special_l_point,
-            cones: p.pg_cone + p.f20g_cone + p.l_cone + p.c_cone + p.w_cone + p.v_cone
+    if (gog_version == 'private') {
+        theGame.players.forEach(p => {
+            theGame.final_results.push({
+                player_id: p.player_id,
+                name: p.name,
+                points: p.g_point + p.c_point + p.special_w_point + p.special_l_point,
+                cones: p.pg_cone + p.f20g_cone + p.l_cone + p.c_cone + p.w_cone + p.v_cone
+            });
         });
-    });
+        
+        theGame.final_results.sort((a, b) => {
+            const points = b.points - a.points;
+            const cones = a.cones - b.cones;
+            const names = a.name.localeCompare(b.name);
+            return points != 0 ? points : cones != 0 ? cones : names;
+        });
     
-    theGame.final_results.sort((a, b) => {
-        const points = b.points - a.points;
-        const cones = a.cones - b.cones;
-        const names = a.name.localeCompare(b.name);
-        return points != 0 ? points : cones != 0 ? cones : names;
-    });
-
-    let place = 1;
-    let extras = 0;
-    theGame.final_results.forEach((r, i) => {
-        if (i != 0) {
-            const prev = theGame.final_results[i - 1];
-            if (r.points == prev.points && r.cones == prev.cones) {
-                extras++;
-            } else {
-                place += extras + 1;
-                extras = 0;
+        let place = 1;
+        let extras = 0;
+        theGame.final_results.forEach((r, i) => {
+            if (i != 0) {
+                const prev = theGame.final_results[i - 1];
+                if (r.points == prev.points && r.cones == prev.cones) {
+                    extras++;
+                } else {
+                    place += extras + 1;
+                    extras = 0;
+                }
             }
-        }
-        r.place = place;
-    });
+            r.place = place;
+        });
+    } else if (gog_version == 'public') {
+        theGame.players.forEach(p => {
+            theGame.final_results.push({
+                player_id: p.player_id,
+                name: p.name,
+                points: p.g_point + p.c_point + p.special_w_point + p.special_l_point,
+                shots: p.pg_shot + p.l_shot + p.c_shot + p.w_shot + p.v_shot
+            });
+        });
+        
+        theGame.final_results.sort((a, b) => {
+            const points = b.points - a.points;
+            const shots = a.shots - b.shots;
+            const names = a.name.localeCompare(b.name);
+            return points != 0 ? points : shots != 0 ? shots : names;
+        });
+    
+        let place = 1;
+        let extras = 0;
+        theGame.final_results.forEach((r, i) => {
+            if (i != 0) {
+                const prev = theGame.final_results[i - 1];
+                if (r.points == prev.points && r.shots == prev.shots) {
+                    extras++;
+                } else {
+                    place += extras + 1;
+                    extras = 0;
+                }
+            }
+            r.place = place;
+        });
+    }
 
     try {
         const response = await fetch(`${BASE_URL}/api/sessions/${sessionId}/complete`, {

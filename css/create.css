@@ -1191,7 +1191,7 @@ footer {
     align-items: center;
 }
 
-#intrude, #abandon, #break_cone, #victory_cone {
+#intrude, #abandon, #break_cone, #victory_cone, #break_shot, #victory_shot {
     flex-direction: column;
     justify-content: center;
 }
