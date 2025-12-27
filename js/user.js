@@ -178,18 +178,11 @@ async function login(username, password) {
         body: JSON.stringify({ username, password })
     });
     const data = await res.json();
-    if (!res.ok) return data;
-
-    let user;
-    for (let i = 0; i < 10; i++) {
-        user = await loadUserOption();
-        if (user.authenticated) break;
-        await new Promise(r => setTimeout(r, 100));
-    }
-
-    if (!user?.authenticated) {
-        console.warn('Login succeeded but cookie not applied yet.');
-        return { authenticated: false, text: 'Login failed (cookie not applied yet)' };
+    if (!res.ok || !data.authenticated) {
+        return {
+            authenticated: false,
+            text: data.text ?? 'Login failed'
+        };
     }
 
     // Close modal then reload
@@ -197,7 +190,7 @@ async function login(username, password) {
         location.reload();
     });
 
-    return user;
+    return data;
 }
 
 async function logout() {
