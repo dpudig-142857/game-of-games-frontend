@@ -292,7 +292,9 @@ function renderLoginForm(div) {
         err.style.visibility = 'visible';
     }
 
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+
         const givenUsername = username.value;
         const givenPassword = password.value;
         if (givenUsername == '') {
