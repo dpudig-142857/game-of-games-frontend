@@ -1194,7 +1194,7 @@ async function initialize() {
         });
     }
 
-    const res = await fetch(`${BASE_URL}/${sessionId}/creating`);
+    const res = await fetch(`${SESSION_URL}/${sessionId}/creating`);
     const info = await res.json();
     theGameTitle = `Game of Games No. ${sessionId}`;
     numGoG = info.num;
@@ -1307,7 +1307,7 @@ async function startGame() {
     };
 
     try {
-        const response = await fetch(`${BASE_URL}`, {
+        const response = await fetch(`${SESSION_URL}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(theGame)
