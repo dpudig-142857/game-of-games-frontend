@@ -79,7 +79,7 @@ export function loadMenuBurger() {
 export function updateProfilePic(user_data) {
     const pfp = document.getElementById('profile-pic');
     if (user_data?.authenticated) {
-        pfp.src = user_data.user.avatar_seed;
+        pfp.src = user_data.avatar_seed;
     } else {
         pfp.src = default_pfp;
     }
