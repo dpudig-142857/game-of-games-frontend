@@ -221,6 +221,7 @@ async function logout() {
 
 export async function loadUserOption() {
     user_data = await loadUser();
+    console.log(`user_data = ${user_data}`);
     updateProfilePic(user_data);
     return user_data;
 }
