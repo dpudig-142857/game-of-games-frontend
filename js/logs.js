@@ -14,7 +14,7 @@ import {
     header
 } from '../js/utils.js';
 
-import { BASE_URL } from './config.js';
+import { BASE_ROUTE } from './config.js';
 
 let gog_version = 'private' // public vs private
 let logs = [];
@@ -280,7 +280,7 @@ async function initialise() {
         setInterval(updateTimeDisplays, 1000);
         updateTimeDisplays();
     
-        const res = await fetch(`${BASE_URL}/api/sessions/logs`);
+        const res = await fetch(`${BASE_ROUTE}/api/sessions/logs`);
         logs = await res.json();
 
         createSortandFilter();

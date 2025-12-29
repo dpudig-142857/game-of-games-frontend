@@ -3,7 +3,7 @@ import {
     styleBox
 } from '../js/utils.js';
 
-import { BASE_URL } from './config.js';
+import { BASE_ROUTE } from './config.js';
 
 const default_pfp = 'assets/default_pfp.svg';
 
@@ -164,7 +164,7 @@ export async function setupModal() {
 }
 
 async function loadUser() {
-    const res = await fetch(`${BASE_URL}/api/auth/me`, {
+    const res = await fetch(`${BASE_ROUTE}/api/auth/me`, {
         credentials: 'include'
     });
     if (!res.ok) return null;
@@ -174,7 +174,7 @@ async function loadUser() {
 }
 
 async function login(username, password) {
-    const res = await fetch(`${BASE_URL}/api/auth/login`, {
+    const res = await fetch(`${BASE_ROUTE}/api/auth/login`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -197,7 +197,7 @@ async function login(username, password) {
 }
 
 async function logout() {
-    const res = await fetch(`${BASE_URL}/api/auth/logout`, {
+    const res = await fetch(`${BASE_ROUTE}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include'
     });

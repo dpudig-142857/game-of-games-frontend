@@ -19,7 +19,7 @@ import {
     typeText
 } from '../js/utils.js';
 
-import { BASE_URL } from './config.js';
+import { BASE_ROUTE } from './config.js';
 
 let gog_version = 'private' // public vs private
 
@@ -869,7 +869,7 @@ async function initialise() {
     setInterval(updateTimeDisplays, 1000);
     updateTimeDisplays();
     
-    const res = await fetch(`${BASE_URL}/api/stats`);
+    const res = await fetch(`${BASE_ROUTE}/api/stats`);
     const stats = await res.json();
     playerStats = stats.players;
     gameStats = stats.games;

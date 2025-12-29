@@ -17,7 +17,7 @@ import {
     centerOrStart
 } from './utils.js';
 
-import { SESSION_URL } from './config.js';
+import { BASE_ROUTE } from './config.js';
 
 let gog_version = 'private' // public vs private
 
@@ -51,15 +51,16 @@ function statusColour(s) {
     }
 }
 
-function theURL(id, other) {
-    if (id && other) return `${SESSION_URL}/${id}/continue/${other}`;
-    if (id) return `${SESSION_URL}/${id}/continue`;
-    return `${SESSION_URL}/continue`;
+function theRoute(id, other) {
+    const start = `${BASE_ROUTE}/api/sessions`;
+    if (id && other) return `${start}/${id}/continue/${other}`;
+    if (id) return `${start}/${id}/continue`;
+    return `${start}/continue`;
 }
 
 async function activateSession(id) {
     try {
-        const response = await fetch(theURL(id, 'active'), {
+        const response = await fetch(theRoute(id, 'active'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
         });
@@ -224,7 +225,7 @@ async function completeGame(log) {
     });
 
     try {
-        const response = await fetch(`${BASE_URL}/api/sessions/${id}/complete`, {
+        const response = await fetch(`${BASE_ROUTE}/api/sessions/${id}/complete`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ session, results })
@@ -244,7 +245,7 @@ async function deleteGame(id) {
     centerOrStart(logsDiv, 'justify');
 
     try {
-        const response = await fetch(theURL(id, 'delete'), {
+        const response = await fetch(theRoute(id, 'delete'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
         });
@@ -376,7 +377,7 @@ async function initialise() {
         setInterval(updateTimeDisplays, 1000);
         updateTimeDisplays();
     
-        const res = await fetch(theURL(null, ' '));
+        const res = await fetch(theRoute(null, ' '));
         sessions = await res.json();
         logs = sessions.sort((a, b) => a.id - b.id).map(s => s.log);
         logs.forEach(l => createLog(l));

@@ -28,7 +28,8 @@ import {
     hexToRgba
 } from './utils.js';
 
-import { SESSION_URL } from './config.js';
+import { BASE_ROUTE } from './config.js';
+let route = `${BASE_ROUTE}/api/sessions`;
 
 let gog_version = 'public'
 //gog_version = 'private'
@@ -1194,7 +1195,7 @@ async function initialize() {
         });
     }
 
-    const res = await fetch(`${SESSION_URL}/${sessionId}/creating`);
+    const res = await fetch(`${route}/${sessionId}/creating`);
     const info = await res.json();
     theGameTitle = `Game of Games No. ${sessionId}`;
     numGoG = info.num;
@@ -1307,7 +1308,7 @@ async function startGame() {
     };
 
     try {
-        const response = await fetch(`${SESSION_URL}`, {
+        const response = await fetch(`${route}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(theGame)
