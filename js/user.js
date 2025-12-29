@@ -169,7 +169,7 @@ async function loadUser() {
     });
     if (!res.ok) return null;
     const data = await res.json();
-    document.body.dataset.user = data.user.username;
+    document.body.dataset.user = data.user?.username ?? null;
     return data;
 }
 
